@@ -41,14 +41,14 @@ arm_and_takeoff(10)
 #set default airspeed
 vehicle.airspeed = 7
 # go to
-print("going to Location1")
 location1= LocationGlobalRelative()
+print("going to Location1")
 vehicle.simple_goto(location1)
 #Hier can de rest
 time.sleep(50)
 #terugkomen
-print("Coming back to basecamp")
 vehicle.mode= VehicleMode("RTL")
+print("Coming back to basecamp")
 time.sleep(2000)
 #close connection
 vehicle.close()
