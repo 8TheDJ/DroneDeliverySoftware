@@ -63,7 +63,12 @@ def kill_switch(vehicle):
     while vehicle.armed:
         print(" Waiting for disarming...")
         time.sleep(1)
+        timeslept=+ 1
+        if timeslept> 15:
+            vehicle.armed= False
+            print("drone forcefully disarmed.")
     print("Drone disarmed.")
+
 
 # Function to listen for user input (emergency stop)
 def listen_for_kill(vehicle):
