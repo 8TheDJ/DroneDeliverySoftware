@@ -2,7 +2,7 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative, APIException
 import time
 import socket
 import argparse
-import math
+import threading
 
 # Function to connect to the drone
 def connectMyCopter():
@@ -56,14 +56,32 @@ def arm_and_takeoff(vehicle, target_altitude):
             break
         time.sleep(1)
 
+# Kill switch function to disarm the drone
+def kill_switch(vehicle):
+    print("Kill switch activated! Landing the drone.")
+    vehicle.mode = VehicleMode("LAND")  # Alternatively, disarm directly with vehicle.armed = False
+    while vehicle.armed:
+        print(" Waiting for disarming...")
+        time.sleep(1)
+    print("Drone disarmed.")
+
+# Function to listen for user input (emergency stop)
+def listen_for_kill(vehicle):
+    while True:
+        command = input("Type 'KILL' to trigger the kill switch: ").strip().upper()
+        if command == "KILL":
+            kill_switch(vehicle)
+            break  # Stop listening after the kill switch is activated
 
 # Main program
 if __name__ == "__main__":
     vehicle = connectMyCopter()
     
     if vehicle:
-        # Keep radio alive if necessary (optional)
-        # keep_radio_alive(vehicle)
+        # Start a thread to listen for the kill switch command in parallel
+        kill_thread = threading.Thread(target=listen_for_kill, args=(vehicle,))
+        kill_thread.daemon = True  # Ensures thread will exit when the main program exits
+        kill_thread.start()
 
         # Arm the drone and take off to 10 meters
         arm_and_takeoff(vehicle, 4)
