@@ -71,6 +71,49 @@ def kill_switch(vehicle):
             print("drone forcefully disarmed.")
     print("Drone disarmed.")
 
+def land_switch():
+    while vehicle.gps_0.fix_type < 2:  # Wait for at least 2D GPS fix
+        print("Waiting for GPS fix...")
+        time.sleep(1)
+
+    print("GPS fix acquired")
+
+    # Check the home position
+    if vehicle.home_location is None:
+        print("Waiting for home location to be set...")
+        while not vehicle.home_location:
+            cmds = vehicle.commands
+            cmds.download()
+            cmds.wait_ready()
+            if vehicle.home_location:
+                print(f"Home location set to: {vehicle.home_location}")
+
+    # Set RTL altitude
+    rtl_altitude = 20  # in meters
+    vehicle.parameters['RTL_ALT'] = rtl_altitude * 100  # RTL_ALT is in centimeters
+    print(f"RTL altitude set to {rtl_altitude} meters")
+
+    # Safety checks before RTL
+    if vehicle.battery.voltage < 10.5:
+        print("Warning: Low battery voltage!")
+    else:
+        print("Battery voltage OK.")
+
+    # Ensure the drone is flying
+    if vehicle.armed and vehicle.location.global_relative_frame.alt > 1:
+        print("Drone is flying, switching to RTL...")
+        vehicle.mode = VehicleMode("RTL")
+    else:
+        print("Drone is not flying, cannot execute RTL.")
+
+    # Monitor altitude until the drone lands
+    while vehicle.location.global_relative_frame.alt > 0.1:
+        print(f"Altitude: {vehicle.location.global_relative_frame.alt}")
+        time.sleep(1)
+
+    print("Drone has landed.")
+
+# Close the vehicle connection
 
 # Function to listen for user input (emergency stop)
 def listen_for_kill(vehicle):
@@ -90,6 +133,13 @@ if __name__ == "__main__":
         kill_thread.daemon = True  # Ensures thread will exit when the main program exits
         kill_thread.start()
 
+        vehicle.mav.command_long_send(
+        vehicle.target_system,  # Target system
+        vehicle.target_component,  # Target component
+        mavutil.mavlink.MAV_CMD_DO_SET_HOME,  # MAVLink command to set home
+        1,  # Set 1 to use current position as home
+        0, 0, 0, 0, 0, 0, 0  # Parameters for lat, lon, alt (not needed when using current position)
+        )
         # Arm the drone and take off to 4 meters
         arm_and_takeoff(vehicle, 4)
 
@@ -105,14 +155,15 @@ if __name__ == "__main__":
         vehicle.simple_goto(location2)
 
         # Stay at the location for some time (this can be adjusted)
-        time.sleep(5000)
+        time.sleep(10)
 
+        #landswitch()
         # Returning to launch location (RTL)
         print("Returning to basecamp (RTL)...")
         vehicle.mode = VehicleMode("RTL")
 
         # Wait for landing or timeout after 2000 seconds
-        time.sleep(2000)
+        time.sleep(10)
 
         # Close the connection
         print("Closing vehicle connection...")
