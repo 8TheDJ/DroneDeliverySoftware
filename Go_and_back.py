@@ -58,19 +58,6 @@ def arm_and_takeoff(vehicle, target_altitude):
             break
         time.sleep(1)
 
-# Kill switch function to disarm the drone
-def kill_switch(vehicle):
-    print("Kill switch activated! Landing the drone.")
-    vehicle.mode = VehicleMode("LAND")  # Alternatively, disarm directly with vehicle.armed = False
-    while vehicle.armed:
-        print(" Waiting for disarming...")
-        time.sleep(1)
-        timeslept=+ 1
-        if timeslept> 15:
-            vehicle.armed= False
-            print("drone forcefully disarmed.")
-    print("Drone disarmed.")
-
 def land_switch():
     while vehicle.gps_0.fix_type < 2:  # Wait for at least 2D GPS fix
         print("Waiting for GPS fix...")
@@ -89,7 +76,7 @@ def land_switch():
                 print(f"Home location set to: {vehicle.home_location}")
 
     # Set RTL altitude
-    rtl_altitude = 20  # in meters
+    rtl_altitude = 6  # Set to 6 meters
     vehicle.parameters['RTL_ALT'] = rtl_altitude * 100  # RTL_ALT is in centimeters
     print(f"RTL altitude set to {rtl_altitude} meters")
 
@@ -113,52 +100,35 @@ def land_switch():
 
     print("Drone has landed.")
 
-# Close the vehicle connection
-
-# Function to listen for user input (emergency stop)
-def listen_for_kill(vehicle):
-    while True:
-        command = input("Type 'KILL' to trigger the kill switch: ").strip().upper()
-        if command == "KILL":
-            kill_switch(vehicle)
-            break  # Stop listening after the kill switch is activated
-
 # Main program
 if __name__ == "__main__":
     vehicle = connectMyCopter()
     
     if vehicle:
-        # Start a thread to listen for the kill switch command in parallel
-        kill_thread = threading.Thread(target=listen_for_kill, args=(vehicle,))
-        kill_thread.daemon = True  # Ensures thread will exit when the main program exits
-        kill_thread.start()
+        # Set RTL altitude to 6 meters before takeoff
+        rtl_altitude = 6  # in meters
+        vehicle.parameters['RTL_ALT'] = rtl_altitude * 100  # RTL_ALT is in centimeters
+        print(f"RTL altitude set to {rtl_altitude} meters")
 
-        vehicle.mav.command_long_send(
-        vehicle.target_system,  # Target system
-        vehicle.target_component,  # Target component
-        mavutil.mavlink.MAV_CMD_DO_SET_HOME,  # MAVLink command to set home
-        1,  # Set 1 to use current position as home
-        0, 0, 0, 0, 0, 0, 0  # Parameters for lat, lon, alt (not needed when using current position)
-        )
-        # Arm the drone and take off to 4 meters
-        arm_and_takeoff(vehicle, 4)
+        # Arm the drone and take off to 3 meters
+        arm_and_takeoff(vehicle, 3)
 
         # Set airspeed after takeoff
-        vehicle.airspeed = 3
+        vehicle.airspeed = 5
         print(f"Airspeed set to {vehicle.airspeed} m/s.")
 
         # Go to a specified location (example: same spot for now, customize as needed)
         print("Going to location1...")
         location1 = LocationGlobalRelative(52.2873594988193, 4.85433965921402, 4)
         vehicle.simple_goto(location1)
-        location2 = LocationGlobalRelative(52.2873594988193, 4.85433965921402, 0.5)
-        vehicle.simple_goto(location2)
+        time.sleep(5)
+
+        vehicle.mode = VehicleMode("LAND")  # Switch to LAND mode
 
         # Stay at the location for some time (this can be adjusted)
         time.sleep(10)
 
-        #landswitch()
-        # Returning to launch location (RTL)
+        # Return to launch location (RTL)
         print("Returning to basecamp (RTL)...")
         vehicle.mode = VehicleMode("RTL")
 
