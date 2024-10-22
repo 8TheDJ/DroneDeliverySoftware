@@ -68,7 +68,7 @@ if __name__ == "__main__":
         print(f"RTL altitude set to {rtl_altitude} meters")
 
         # Arm the drone and take off to 3 meters
-        arm_and_takeoff(vehicle, 3)
+        arm_and_takeoff(vehicle, 5)
 
         # Set airspeed after takeoff
         vehicle.airspeed = 5
@@ -76,12 +76,13 @@ if __name__ == "__main__":
 
         # Go to a specified location (example: same spot for now, customize as needed)
         print("Going to location1...")
-        location1 = LocationGlobalRelative(52.2872816, 4.8543289, 4)
+        location1 = LocationGlobalRelative(52.287329, 4.855446, 5)
         vehicle.simple_goto(location1)
-        time.sleep(10)
-        location2=(52.2877910, 4.8545328, 4)
-        
-        vehicle.mode = VehicleMode("LAND")  # Switch to LAND mode
+        time.sleep(30)
+        location2=(52.287725, 4.855448, 5)
+        vehicle.simple_goto(location2)
+
+        #vehicle.mode = VehicleMode("LAND")  # Switch to LAND mode
 
         # Stay at the location for some time (this can be adjusted)
         time.sleep(10)
