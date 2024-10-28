@@ -76,11 +76,11 @@ if __name__ == "__main__":
 
         # Go to a specified location (example: same spot for now, customize as needed)
         print("Going to location1...")
-        location1 = LocationGlobalRelative(52.287329, 4.855446, 5)
+        location1 = LocationGlobalRelative(52.287725, 4.855448, 6)
         vehicle.simple_goto(location1)
-        time.sleep(30)
-        location2=(52.287725, 4.855448, 5)
-        vehicle.simple_goto(location2)
+        time.sleep(5)
+        #location2=(52.287725, 4.855448, 5)
+        #vehicle.simple_goto(location2)
 
         #vehicle.mode = VehicleMode("LAND")  # Switch to LAND mode
 
