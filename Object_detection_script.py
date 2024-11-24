@@ -18,6 +18,7 @@ objectinfront = 0
 arrived = 0
 start_time = time.time()  # Record the starting time
 threshold = 500  # Depth threshold
+percentagethreshold = 50 #threshold for percentage of depth above a certain threshold
 frame_counter = 0
 
 
@@ -88,7 +89,7 @@ while not arrived:
 
             print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
 
-            if percentage_above_threshold > 50:
+            if percentage_above_threshold > percentagethreshold:
                 print("There is an object in front of me")
                 objectinfront = 1
             
