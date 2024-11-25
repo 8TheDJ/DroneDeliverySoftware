@@ -95,8 +95,8 @@ while not arrived:
             
     # Check if one minute has passed
     elapsed_time = time.time() - start_time
-    if elapsed_time >= 60:
+    if elapsed_time >= 120:
         arrived = 1
-        print("One minute has passed. This test is completed")
+        print("Two minutes have passed. This test is completed")
     frame_counter += 1
         
