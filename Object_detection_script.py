@@ -63,13 +63,8 @@ while not arrived:
             middle_piece = output[h_split:2*h_split, w_split:2*w_split]
 
             # Save the depth map and middle piece with unique filenames depending on the frame it is at
-            depth_map_filename = f'depth_map_{frame_counter}.png'
-            middle_piece_filename = f'middle_piece_{frame_counter}.png'
             colored_depth_map_filename = f'depth_map_colored_{frame_counter}.png'
             colored_middle_piece_filename = f'middle_piece_colored_{frame_counter}.png'
-
-            cv2.imwrite(depth_map_filename, output)  # Save the full depth map
-            cv2.imwrite(middle_piece_filename, middle_piece)  # Save the middle piece
 
             # Save the depth map and middle piece as colored images for visualization
             plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
