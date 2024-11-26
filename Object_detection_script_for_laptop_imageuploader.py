@@ -19,7 +19,7 @@ threshold = 500  # Depth threshold
 percentagethreshold = 50 #threshold for percentage of depth above a certain threshold
 
 
-frame = cv2.imread("C:/Users/itayh/Downloads/_d44c9a91-e449-410b-bcc8-47c10b16ac7c.jpg") #path to your image
+frame = cv2.imread("C:/Users/itayh/Downloads/white_wall_test.jpg") #path to your image
 # Transform input for MiDaS
 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
 imgbatch = transform(img).to('cpu')
@@ -97,4 +97,3 @@ with torch.no_grad():
                 if percentage_above_threshold > 30:
                     print(f"There is an object in front of me ({threshold}, 30%)")
                     objectinfront = 1
-                       
