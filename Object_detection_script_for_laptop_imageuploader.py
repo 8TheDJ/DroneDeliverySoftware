@@ -60,20 +60,41 @@ with torch.no_grad():
             plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
             plt.imsave(colored_middle_piece_filename, middle_piece, cmap='plasma')  # Colored middle piece
 
-            # Check for object directly in front in the middle piece
-            total_pixels = middle_piece.size
-            pixels_above_threshold = np.sum(middle_piece > threshold)
-            percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
+            
+            
+            for i in range(5):
+                threshold = 100*i + 300
+                # Check for object directly in front in the middle piece
+                total_pixels = middle_piece.size
+                pixels_above_threshold = np.sum(middle_piece > threshold)
+                percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
-            print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
+                print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
 
-            # Check for object directly in front in the whole piece
-            total_pixels2 = output.size
-            pixels_above_threshold2 = np.sum(output > threshold)
-            percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
+                # Check for object directly in front in the whole piece
+                total_pixels2 = output.size
+                pixels_above_threshold2 = np.sum(output > threshold)
+                percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
 
-            print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
+                print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
 
-            if percentage_above_threshold > percentagethreshold:
-                print("There is an object in front of me")
-                objectinfront = 1
+                if percentage_above_threshold > 70:
+                    print(f"There is an object in front of me ({threshold}, 70%)")
+                    objectinfront = 1
+
+                if percentage_above_threshold > 60:
+                    print(f"There is an object in front of me ({threshold}, 60%)")
+                    objectinfront = 1
+                    
+                if percentage_above_threshold > 50:
+                    print(f"There is an object in front of me ({threshold}, 50%)")
+                    objectinfront = 1
+
+                if percentage_above_threshold > 40:
+                    print(f"There is an object in front of me ({threshold}, 40%)")
+                    objectinfront = 1
+
+                if percentage_above_threshold > 30:
+                    print(f"There is an object in front of me ({threshold}, 30%)")
+                    objectinfront = 1
+                       
