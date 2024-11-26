@@ -19,7 +19,7 @@ threshold = 500  # Depth threshold
 percentagethreshold = 50 #threshold for percentage of depth above a certain threshold
 
 
-frame = cv2.imread("C:/Users/itayh/Downloads/white_wall_test.jpg") #path to your image
+frame = cv2.imread("C:/Users/itayh/Desktop/python/MiDaS test plaatjes/2meterschoolmuur.jpg") #path to your image
 # Transform input for MiDaS
 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
 imgbatch = transform(img).to('cpu')
