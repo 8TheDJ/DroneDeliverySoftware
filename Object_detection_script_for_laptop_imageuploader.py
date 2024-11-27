@@ -1,3 +1,4 @@
+import os
 import cv2
 import torch
 import numpy as np
@@ -13,80 +14,97 @@ midas.eval()
 transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
 
-# Initialize variables
-objectinfront = 0
-thresholds = [300, 400, 500, 600, 700]  # Depth thresholds
-image_name = "2meterschoolmuur.jpg"
-frame = cv2.imread(f"C:/Users/itayh/Desktop/python/MiDaS test plaatjes/{image_name}")  # Path to your image
+# Parameters
+input_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection"  # Replace with the path to your folder
+output_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection output"  # Folder to save results
+os.makedirs(output_folder, exist_ok=True)
+# Je ziet dat bijvoorbeeld bij de thresholds tussen de 350 en 400 het veel specifieker is dan bijvoorbeeld tussen 500 en 600. Dit komt doordat we de code meerdere keren hebben gerunt en elke keer rond de 300, 350 en 400 kregen, dus we wouden het specificeren
+thresholds = [100, 200,250,275, 300,325,350,355,360,365,370,375,380,385,390,395, 400,425,450,475, 500, 600, 700, 800]  # drempelwaardes voor de diepte
+percentage_thresholds = [5,10,15, 20,25, 30, 40, 50, 60, 70, 80]  # Percentage thresholds
 
-# Transform input for MiDaS
-img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
-imgbatch = transform(img).to('cpu')
+# Initialize summary table
+summary_table = []
 
-# Make a prediction
-with torch.no_grad():
-    prediction = midas(imgbatch)
-    prediction = torch.nn.functional.interpolate(
-        prediction.unsqueeze(1),
-        size=img.shape[:2],
-        mode='bicubic',
-        align_corners=False
-    ).squeeze()
+# Initialize a dictionary to count correctness for each threshold-percentage combination
+correctness_counts = {f"{threshold} at {percentage_threshold}%": 0 for threshold in thresholds for percentage_threshold in percentage_thresholds}
 
-    output = prediction.cpu().numpy()
+# Analyze object detection
+for image_file in os.listdir(input_folder):
+    if not image_file.lower().endswith(('png', 'jpg', 'jpeg')):
+        continue  # Skip non-image files
+
+    image_path = os.path.join(input_folder, image_file)
+    image_name = os.path.basename(image_file)
+
+    # Load and preprocess the image
+    frame = cv2.imread(image_path)
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+    imgbatch = transform(img).to('cpu')
+
+    # Predict depth map
+    with torch.no_grad():
+        prediction = midas(imgbatch)
+        prediction = torch.nn.functional.interpolate(
+            prediction.unsqueeze(1),
+            size=img.shape[:2],
+            mode='bicubic',
+            align_corners=False
+        ).squeeze()
+        output = prediction.cpu().numpy()
 
     # Split depth map into 9 pieces and analyze the middle piece
     h, w = output.shape
     h_split, w_split = h // 3, w // 3
+    middle_piece = output[h_split:2*h_split, w_split:2*w_split]
 
-    # Extract middle piece
-    middle_piece = output[h_split:2 * h_split, w_split:2 * w_split]
+    # Analyze object detection
+    detection_row = {"Image Name": image_name}
+    detected_any_object = False  # Track if any threshold detects an object
+    correct_thresholds = []  # Store thresholds with correct detection
 
-    # Save the depth map as a visualization
-    plt.imsave('depth_map_colored.png', output, cmap='plasma')  # Colored depth map
-
-        # Initialize data storage for the table
-    data = {"Image Name": [image_name]}  # Start with the image name
-    object_rows = []  # Rows for object detection results
-
-    # Calculate percentages for each threshold
     for threshold in thresholds:
-        # Check percentage above threshold in the middle piece
         total_pixels = middle_piece.size
         pixels_above_threshold = np.sum(middle_piece > threshold)
         percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
-        # Add to the data dictionary
-        data[f"Percentage Above {threshold}"] = [percentage_above_threshold]
-
-        # Check if an object is in front for various percentage thresholds
-        threshold_messages = [30, 40, 50, 60, 70]  # List of percentage thresholds
-
-        for percentage_threshold in threshold_messages:
+        for percentage_threshold in percentage_thresholds:
+            key = f"{threshold} at {percentage_threshold}%"
             if percentage_above_threshold > percentage_threshold:
-                object_rows.append(
-                    {
-                        "Threshold": threshold,
-                        "Percentage": percentage_above_threshold,
-                        "Message": f"Object detected at {percentage_threshold}% threshold"
-                    }
-                )
+                detection_row[key] = "yes"
+                detected_any_object = True
+                if "object" in image_name.lower():
+                    correct_thresholds.append(key)
+                    correctness_counts[key] += 1
             else:
-                object_rows.append(
-                    {
-                        "Threshold": threshold,
-                        "Percentage": percentage_above_threshold,
-                        "Message": f"No object detected at {percentage_threshold}% threshold"
-                    }
-                )
+                detection_row[key] = "no"
+                if "object" not in image_name.lower():
+                    correct_thresholds.append(key)
+                    correctness_counts[key] += 1
 
-    # Save the table to a CSV file
-    df = pd.DataFrame(data)
-    df.to_csv('depth_analysis.csv', index=False)
+    # Add a column for whether the word "object" is in the image name
+    detection_row["Was There an Object in the Image?"] = "yes" if "object" in image_name.lower() else "no"
 
-    # Save object detection results as a separate CSV file
-    if object_rows:
-        object_df = pd.DataFrame(object_rows)
-        object_df.to_csv('object_detection.csv', index=False)
+    # Final column listing correct thresholds
+    detection_row["Correct Thresholds"] = ", ".join(correct_thresholds)
 
-print("Analysis saved to 'depth_analysis.csv' and 'object_detection.csv'.")
+    # Add row to summary table
+    summary_table.append(detection_row)
+
+# After processing all images, find the most correct combinations
+most_correct_count = max(correctness_counts.values())
+most_correct_combinations = [key for key, count in correctness_counts.items() if count == most_correct_count]
+
+# Save correctness counts as an additional CSV for reference (optional)
+correctness_counts_df = pd.DataFrame(list(correctness_counts.items()), columns=["Threshold-Percentage Combination", "Correct Count"])
+correctness_counts_file = os.path.join(output_folder, "correctness_counts.csv")
+correctness_counts_df.to_csv(correctness_counts_file, index=False)
+
+# Add the most correct combinations below the summary table
+summary_table.append({"Image Name": "Most Correct Combination(s)", **{key: "" for key in correctness_counts}, "Correct Thresholds": ", ".join(most_correct_combinations)})
+
+# Save summary table as a CSV
+summary_df = pd.DataFrame(summary_table)
+summary_file = os.path.join(output_folder, "object_detection_summary_with_most_correct.csv")
+summary_df.to_csv(summary_file, index=False)
+
+print(f"Results saved to {output_folder}")
