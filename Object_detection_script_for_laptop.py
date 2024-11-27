@@ -63,23 +63,11 @@ while not arrived:
 
             # Extract all pieces
             middle_piece = output[h_split:2*h_split, w_split:2*w_split]
-            one_piece = output[h_split:1*h_split, w_split:1*w_split]
-            two_piece = output[h_split:2*h_split, w_split:1*w_split]
-            three_piece = output[h_split:3*h_split, w_split:1*w_split]
-            four_piece = output[h_split:1*h_split, w_split:2*w_split]
-            six_piece = output[h_split:3*h_split, w_split:2*w_split]
-            seven_piece = output[h_split:1*h_split, w_split:3*w_split]
-            eight_piece = output[h_split:2*h_split, w_split:3*w_split]
-            nine_piece = output[h_split:3*h_split, w_split:3*w_split]
 
             # Save the depth map and middle piece with unique filenames depending on the frame it is at
-            depth_map_filename = f'depth_map_{frame_counter}.png'
-            middle_piece_filename = f'middle_piece_{frame_counter}.png'
             colored_depth_map_filename = f'depth_map_colored_{frame_counter}.png'
             colored_middle_piece_filename = f'middle_piece_colored_{frame_counter}.png'
 
-            cv2.imwrite(depth_map_filename, output)  # Save the full depth map
-            cv2.imwrite(middle_piece_filename, middle_piece)  # Save the middle piece
 
             # Save the depth map and middle piece as colored images for visualization
             plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
@@ -105,8 +93,8 @@ while not arrived:
             
     # Check if one minute has passed
     elapsed_time = time.time() - start_time
-    if elapsed_time >= 5:
+    if elapsed_time >= 120:
         arrived = 1
-        print("5/60 minutes have passed. This test is completed")
+        print("2 minutes have passed. This test is completed")
     frame_counter += 1
         
