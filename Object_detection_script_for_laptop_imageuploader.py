@@ -29,7 +29,7 @@ summary_table = []
 # Initialize a dictionary to count correctness for each threshold-percentage combination
 correctness_counts = {f"{threshold} at {percentage_threshold}%": 0 for threshold in thresholds for percentage_threshold in percentage_thresholds}
 
-# Analyze object detection
+
 for image_file in os.listdir(input_folder):
     if not image_file.lower().endswith(('png', 'jpg', 'jpeg')):
         continue  # Skip non-image files
@@ -63,14 +63,16 @@ for image_file in os.listdir(input_folder):
     detected_any_object = False  # Track if any threshold detects an object
     correct_thresholds = []  # Store thresholds with correct detection
 
+    #calculations for percentages of pixels above the threshold
     for threshold in thresholds:
         total_pixels = middle_piece.size
         pixels_above_threshold = np.sum(middle_piece > threshold)
         percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
+        #check if object is detected
         for percentage_threshold in percentage_thresholds:
             key = f"{threshold} at {percentage_threshold}%"
-            if percentage_above_threshold > percentage_threshold:
+            if percentage_above_threshold > percentage_threshold: #if percentages of pixels above the threshold is more than the threshold for percentages then an object is detected.
                 detection_row[key] = "yes"
                 detected_any_object = True
                 if "object" in image_name.lower():
@@ -85,22 +87,22 @@ for image_file in os.listdir(input_folder):
     # Add a column for whether the word "object" is in the image name
     detection_row["Was There an Object in the Image?"] = "yes" if "object" in image_name.lower() else "no"
 
-    # Final column listing correct thresholds
+    # Final column listing correct thresholds for each image
     detection_row["Correct Thresholds"] = ", ".join(correct_thresholds)
 
     # Add row to summary table
     summary_table.append(detection_row)
 
-# After processing all images, find the most correct combinations
+# After processing all images, find the combinations that are most often correct
 most_correct_count = max(correctness_counts.values())
 most_correct_combinations = [key for key, count in correctness_counts.items() if count == most_correct_count]
 
-# Save correctness counts as an additional CSV for reference (optional)
+# Save correctness counts as an additional CSV for reference
 correctness_counts_df = pd.DataFrame(list(correctness_counts.items()), columns=["Threshold-Percentage Combination", "Correct Count"])
 correctness_counts_file = os.path.join(output_folder, "correctness_counts.csv")
 correctness_counts_df.to_csv(correctness_counts_file, index=False)
 
-# Add the most correct combinations below the summary table
+# Add the most combinations who are most correct below the summary table
 summary_table.append({"Image Name": "Most Correct Combination(s)", **{key: "" for key in correctness_counts}, "Correct Thresholds": ", ".join(most_correct_combinations)})
 
 # Save summary table as a CSV

@@ -33,7 +33,7 @@ else:
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
     imgbatch = transform(img).to('cpu')
 
-    # Make a prediction
+    # Make a depth prediction
     with torch.no_grad():
         prediction = midas(imgbatch)
         prediction = torch.nn.functional.interpolate(

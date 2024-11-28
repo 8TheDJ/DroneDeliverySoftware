@@ -31,7 +31,7 @@ for image_file in os.listdir(input_folder):
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
     imgbatch = transform(img).to('cpu')
 
-    # Predict depth map
+    # Make a depth prediction
     with torch.no_grad():
         prediction = midas(imgbatch)
         prediction = torch.nn.functional.interpolate(
