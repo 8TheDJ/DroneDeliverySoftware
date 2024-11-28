@@ -9,13 +9,13 @@ midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')
 midas.to('cpu')
 midas.eval()
 
-# Input transformation pipeline
+# Input transformation pipelinegi
 transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
 
 # Parameters
-input_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection"  # Path naar folder met plaatjes
-output_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection output"  # Folder om tabellen in op te slaan
+input_folder = "Path_to_inputfolder"  # Path naar folder met plaatjes
+output_folder = "Path_to_outputfolder"  # Folder om tabellen in op te slaan
 os.makedirs(output_folder, exist_ok=True) #Checken of output folder bestaat
 
 # Analyze object detection

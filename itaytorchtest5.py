@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
+import time
 
 # Load the MiDaS model
 midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')
@@ -12,6 +13,7 @@ midas.eval()
 # Input transformation pipeline
 transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
+
 
 # Capture a single frame using libcamera-still and pipe it into OpenCV
 # The command will capture a frame using libcamera and output it to stdout

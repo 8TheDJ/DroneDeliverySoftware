@@ -15,14 +15,15 @@ transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
 
 # Parameters
-input_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection"  # Replace with the path to your folder
-output_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection output"  # Folder to save results
-os.makedirs(output_folder, exist_ok=True)
+input_folder = "Path_to_inputfolder"  # Path naar folder met plaatjes
+output_folder = "Path_to_outputfolder"  # Folder om tabellen in op te slaan
+os.makedirs(output_folder, exist_ok=True) #Checken of output folder bestaat
+
 # Je ziet dat bijvoorbeeld bij de thresholds tussen de 350 en 400 het veel specifieker is dan bijvoorbeeld tussen 500 en 600. Dit komt doordat we de code meerdere keren hebben gerunt en elke keer rond de 300, 350 en 400 kregen, dus we wouden het specificeren
 thresholds = [100, 200,250,275, 300,325,350,355,360,365,370,375,380,385,390,395, 400,425,450,475, 500, 600, 700, 800]  # drempelwaardes voor de diepte
-percentage_thresholds = [5,10,15, 20,25, 30, 40, 50, 60, 70, 80]  # Percentage thresholds
+percentage_thresholds = [5,10,15, 20,25, 30, 40, 50, 60, 70, 80]  # Drempelpercentages
 
-# Initialize summary table
+# Tabel van object detectie summary opstellen
 summary_table = []
 
 # Initialize a dictionary to count correctness for each threshold-percentage combination
