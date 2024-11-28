@@ -3,10 +3,7 @@ import time
 import socket
 import argparse
 import math
-
-#Doel om het starten van de drone te testen, dus hij moet gewoon zijn rotoren aanzetten en weer loslaten, zodat we kleine modules bouwen die je bij mekaar kan doen
-#https://www.youtube.com/watch?v=TFDWs_DG2QY
-#https://dronekit-python.readthedocs.io/en/latest/guide/taking_off.html
+#er staan geen coordinaten waar coordinaten hadden moeten staan, omdat het de onze locatie weg geeft aan het internet, er staat in het commentaar bij waar er coordinaten hadden moeten staan.
 
 #connect drone
 parser=argparse.ArgumentParser(description="commands")
@@ -41,7 +38,7 @@ arm_and_takeoff(10)
 #set default airspeed
 vehicle.airspeed = 7
 # go to
-location1= LocationGlobalRelative()
+location1= LocationGlobalRelative()#Hier coördinaten invoeren(latitude, longitude, altitude)
 print("going to Location1")
 vehicle.simple_goto(location1)
 #Hier can de rest
@@ -52,4 +49,3 @@ print("Coming back to basecamp")
 time.sleep(2000)
 #close connection
 vehicle.close()
-#itay

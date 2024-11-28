@@ -1,84 +1,82 @@
-import cv2
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-import subprocess
+import cv2  # Computer Vision bibliotheek
+import torch  # Machine Learning bibliotheek voor PyTorch
+import numpy as np  # Voor numerieke berekeningen
+import matplotlib.pyplot as plt  # Voor visualisatie
+import subprocess  # Voor het uitvoeren van systeemcommando's
 
-# Load the MiDaS model
-midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')
-midas.to('cpu')
-midas.eval()
+# Laad het MiDaS model voor diepte-schatting
+midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')  # MiDaS_small is een lichtgewicht versie
+midas.to('cpu')  # Plaats het model op de CPU (gebruik GPU als beschikbaar voor betere prestaties)
+midas.eval()  # Zet het model in evaluatiemodus
 
-# Input transformation pipeline
-transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
-transform = transforms.small_transform
+# Laad de transformaties die nodig zijn voor invoer naar het model
+transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')  # Transformatiemodule van MiDaS
+transform = transforms.small_transform  # Gebruik de transformaties voor het kleine model
 
-# Capture a single frame using libcamera-still and pipe it into OpenCV
-# The command will capture a frame using libcamera and output it to stdout
-subprocess.run("sudo libcamera-still -o /tmp/captured_frame.jpg --nopreview", shell=True)
+# Maak een enkele opname met libcamera-still en sla deze op
+subprocess.run("sudo libcamera-still -o /tmp/captured_frame.jpg --nopreview", shell=True)  # Maak een opname zonder preview
 
-# Load the captured frame into OpenCV
-frame = cv2.imread('/tmp/captured_frame.jpg')
+# Laad de gemaakte afbeelding in OpenCV
+frame = cv2.imread('/tmp/captured_frame.jpg')  # Lees de afbeelding uit het tijdelijke bestand
 
 if frame is None:
-    print("Error: Could not read the captured frame. Make sure it's saved correctly.")
+    print("Fout: Kon de opgenomen afbeelding niet laden. Controleer of deze correct is opgeslagen.")
 else:
-    print(f"Captured Frame Shape: {frame.shape}")
-    print(f"Frame Data (Top-left corner): {frame[0, 0]}")  # Check the pixel value of top-left corner
-    # Save the original frame captured by libcamera
-    cv2.imwrite('original_frame.jpg', frame)
-    # Transform input for MiDaS 
-    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
-    imgbatch = transform(img).to('cpu')
+    print(f"Afbeeldingsvorm: {frame.shape}")  # Druk de dimensies van de afbeelding af
+    print(f"Pixelwaarde linksboven: {frame[0, 0]}")  # Controleer de pixelwaarde van de linkerbovenhoek
+    cv2.imwrite('original_frame.jpg', frame)  # Sla het originele frame op voor referentie
 
-    # Make a prediction
-    with torch.no_grad():
-        prediction = midas(imgbatch)
+    # Verwerk de afbeelding voor invoer naar MiDaS
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Converteer afbeelding van BGR (OpenCV standaard) naar RGB
+    imgbatch = transform(img).to('cpu')  # Pas transformaties toe en zet op CPU
+
+    # Maak een voorspelling met het MiDaS model
+    with torch.no_grad():  # Uitschakelen van gradientberekening voor snellere inferentie
+        prediction = midas(imgbatch)  # Dieptevoorspelling
         prediction = torch.nn.functional.interpolate(
-            prediction.unsqueeze(1),
-            size=img.shape[:2],
-            mode='bicubic',
+            prediction.unsqueeze(1),  # Voeg een dimensie toe (kanalen)
+            size=img.shape[:2],  # Herformaat naar de originele afbeeldinggrootte
+            mode='bicubic',  # Gebruik bicubische interpolatie
             align_corners=False
-        ).squeeze()
+        ).squeeze()  # Verwijder de extra dimensie
 
-        output = prediction.cpu().numpy()
+        output = prediction.cpu().numpy()  # Converteer de tensor naar een numpy-array
 
-        # Check range of the output (depth map values)
-        print(f"Output Min: {np.min(output)}, Output Max: {np.max(output)}")
+        # Controleer het bereik van de voorspelde dieptewaarden
+        print(f"Minimale diepte: {np.min(output)}, Maximale diepte: {np.max(output)}")
 
-        # Save depth values to a text file
+        # Sla de dieptewaarden op in een tekstbestand
         with open('depth_values.txt', 'w') as f:
             for row in output:
                 f.write(' '.join(map(str, row)) + '\n')
+        print("Dieptewaarden opgeslagen in 'depth_values.txt'")
 
-        print("Depth values saved to 'depth_values.txt'")
-
-        # Split depth map into 9 pieces and analyze the middle piece
+        # Splits de dieptekaart in 9 stukken en analyseer het middelste stuk
         h, w = output.shape
         h_split, w_split = h // 3, w // 3
 
-        # Extract middle piece
-        middle_piece = output[h_split:2*h_split, w_split:2*w_split]
+        # Pak het middelste stuk van de dieptekaart
+        middle_piece = output[h_split:2 * h_split, w_split:2 * w_split]
 
-        # Check for object directly in front in the middle piece
-        threshold = 500
+        # Analyseer de dieptewaarden in het middelste stuk
+        threshold = 500  # Drempelwaarde voor diepte
         total_pixels = middle_piece.size
-        pixels_above_threshold = np.sum(middle_piece > threshold)
+        pixels_above_threshold = np.sum(middle_piece > threshold)  # Aantal pixels boven de drempel
         percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
-        print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
+        print(f"{percentage_above_threshold:.2f}% van de pixels in het middelste stuk heeft een dieptewaarde boven {threshold}")
 
-        # Check for object directly in front in the whole piece
+        # Analyseer de hele dieptekaart
         total_pixels2 = output.size
         pixels_above_threshold2 = np.sum(output > threshold)
         percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
 
-        print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
+        print(f"{percentage_above_threshold2:.2f}% van de pixels in de hele afbeelding heeft een dieptewaarde boven {threshold}")
 
-    # Save the depth map and the middle piece as images
-    cv2.imwrite('depth_map.png', output)  # Save the full depth map
-    cv2.imwrite('middle_piece.png', middle_piece)  # Save the middle piece
+    # Sla de dieptekaart en het middelste stuk op als afbeeldingen
+    cv2.imwrite('depth_map.png', output)  # Sla de volledige dieptekaart op
+    cv2.imwrite('middle_piece.png', middle_piece)  # Sla het middelste stuk op
 
-    # Optionally, you can save the depth map as a color image (useful for visualization)
-    plt.imsave('depth_map_colored.png', output, cmap='plasma')  # Colored depth map
-    plt.imsave('middle_piece_colored.png', middle_piece, cmap='plasma')  # Colored middle piece
+    # Optioneel: sla de dieptekaart op als een kleurrijke afbeelding
+    plt.imsave('depth_map_colored.png', output, cmap='plasma')  # Kleurrijke visualisatie van de dieptekaart
+    plt.imsave('middle_piece_colored.png', middle_piece, cmap='plasma')  # Kleurrijke visualisatie van het middelste stuk
