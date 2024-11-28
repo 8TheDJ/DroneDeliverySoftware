@@ -17,8 +17,8 @@ transform = transforms.small_transform
 objectinfront = 0
 arrived = 0
 start_time = time.time()  # Record the starting time
-threshold = 500  # Depth threshold
-percentagethreshold = 50 #threshold for percentage of depth above a certain threshold
+threshold = 372.5  # Drempelwaarde voor de diepte, gevonden met "Object_detection_script_for_laptop_imageuploader.py"
+percentagethreshold = 10 #drempelpercentage, gevonden met "Object_detection_script_for_laptop_imageuploader.py"
 frame_counter = 0
 
 
