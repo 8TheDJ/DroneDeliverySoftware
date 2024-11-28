@@ -35,9 +35,6 @@ while not arrived:
         print("Error: Could not read frame from webcam.")
         continue
 
-    print(f"Captured Frame Shape: {frame.shape}")
-    print(f"Frame Data (Top-left corner): {frame[0, 0]}")  # Check the pixel value of top-left corner
-
     original_frame_filename = f'original_frame_{frame_counter}.png'
     cv2.imwrite(original_frame_filename, frame)
 

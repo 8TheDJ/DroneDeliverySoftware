@@ -35,10 +35,6 @@ while not arrived:
     if frame is None:
         print("Error: Could not read the captured frame. Make sure it's saved correctly.")
     else:
-        print(f"Captured Frame Shape: {frame.shape}")
-        print(f"Frame Data (Top-left corner): {frame[0, 0]}")  # Check the pixel value of top-left corner
-        # Save the original frame captured by libcamera
-        cv2.imwrite('original_frame.jpg', frame)
         # Transform input for MiDaS 
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
         imgbatch = transform(img).to('cpu')
