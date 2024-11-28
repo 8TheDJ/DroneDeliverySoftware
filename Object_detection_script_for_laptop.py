@@ -61,31 +61,31 @@ while not arrived:  # Blijf doorgaan tot de test is voltooid (na 2 minuten)
         h, w = output.shape
         h_split, w_split = h // 3, w // 3
 
-            # Extract all pieces
-            middle_piece = output[h_split:2*h_split, w_split:2*w_split]
+        # Extract all pieces
+        middle_piece = output[h_split:2*h_split, w_split:2*w_split]
 
-            # Save the depth map and middle piece with unique filenames depending on the frame it is at
-            colored_depth_map_filename = f'depth_map_colored_{frame_counter}.png'
-            colored_middle_piece_filename = f'middle_piece_colored_{frame_counter}.png'
+        # Save the depth map and middle piece with unique filenames depending on the frame it is at
+        colored_depth_map_filename = f'depth_map_colored_{frame_counter}.png'
+        colored_middle_piece_filename = f'middle_piece_colored_{frame_counter}.png'
 
 
-            # Save the depth map and middle piece as colored images for visualization
-            plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
-            plt.imsave(colored_middle_piece_filename, middle_piece, cmap='plasma')  # Colored middle piece
+        # Save the depth map and middle piece as colored images for visualization
+        plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
+        plt.imsave(colored_middle_piece_filename, middle_piece, cmap='plasma')  # Colored middle piece
 
-            # Check for object directly in front in the middle piece
-            total_pixels = middle_piece.size
-            pixels_above_threshold = np.sum(middle_piece > threshold)
-            percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
+        # Check for object directly in front in the middle piece
+        total_pixels = middle_piece.size
+        pixels_above_threshold = np.sum(middle_piece > threshold)
+        percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
-            print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
+        print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
 
-            # Check for object directly in front in the whole piece
-            total_pixels2 = output.size
-            pixels_above_threshold2 = np.sum(output > threshold)
-            percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
+        # Check for object directly in front in the whole piece
+        total_pixels2 = output.size
+        pixels_above_threshold2 = np.sum(output > threshold)
+        percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
 
-            print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
+        print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
 
         if percentage_above_threshold > percentagethreshold:
             print("Er is een object voor de camera.")
