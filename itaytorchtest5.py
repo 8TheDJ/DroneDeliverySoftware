@@ -1,20 +1,21 @@
-import cv2  # Computer Vision bibliotheek
-import torch  # Machine Learning bibliotheek voor PyTorch
-import numpy as np  # Voor numerieke berekeningen
-import matplotlib.pyplot as plt  # Voor visualisatie
-import subprocess  # Voor het uitvoeren van systeemcommando's
+import cv2
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+import subprocess
 
-# Laad het MiDaS model voor diepte-schatting
-midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')  # MiDaS_small is een lichtgewicht versie
-midas.to('cpu')  # Plaats het model op de CPU (gebruik GPU als beschikbaar voor betere prestaties)
-midas.eval()  # Zet het model in evaluatiemodus
+# Load the MiDaS model
+midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')
+midas.to('cpu')
+midas.eval()
 
-# Laad de transformaties die nodig zijn voor invoer naar het model
-transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')  # Transformatiemodule van MiDaS
-transform = transforms.small_transform  # Gebruik de transformaties voor het kleine model
+# Input transformation pipeline
+transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
+transform = transforms.small_transform
 
-# Maak een enkele opname met libcamera-still en sla deze op
-subprocess.run("sudo libcamera-still -o /tmp/captured_frame.jpg --nopreview", shell=True)  # Maak een opname zonder preview
+# Capture a single frame using libcamera-still and pipe it into OpenCV
+# The command will capture a frame using libcamera and output it to stdout
+subprocess.run("sudo libcamera-still -o /tmp/captured_frame.jpg --nopreview", shell=True)
 
 # Laad de gemaakte afbeelding in OpenCV
 frame = cv2.imread('/tmp/captured_frame.jpg')  # Lees de afbeelding uit het tijdelijke bestand
@@ -30,9 +31,9 @@ else:
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Converteer afbeelding van BGR (OpenCV standaard) naar RGB
     imgbatch = transform(img).to('cpu')  # Pas transformaties toe en zet op CPU
 
-    # Maak een voorspelling met het MiDaS model
-    with torch.no_grad():  # Uitschakelen van gradientberekening voor snellere inferentie
-        prediction = midas(imgbatch)  # Dieptevoorspelling
+    # Make a prediction
+    with torch.no_grad():
+        prediction = midas(imgbatch)
         prediction = torch.nn.functional.interpolate(
             prediction.unsqueeze(1),  # Voeg een dimensie toe (kanalen)
             size=img.shape[:2],  # Herformaat naar de originele afbeeldinggrootte

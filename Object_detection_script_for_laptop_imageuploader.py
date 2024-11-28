@@ -14,19 +14,15 @@ midas.eval()  # Zet het model in evaluatiemodus (geen training)
 transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
 
-# Parameters voor de analyse
-input_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection"  # Map met invoerafbeeldingen
-output_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection output"  # Map voor de uitvoer
-os.makedirs(output_folder, exist_ok=True)  # Maak de uitvoermap als deze nog niet bestaat
+# Parameters
+input_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection"  # Replace with the path to your folder
+output_folder = "C:/Users/itayh/Desktop/python/MiDaS test object detection output"  # Folder to save results
+os.makedirs(output_folder, exist_ok=True)
+# Je ziet dat bijvoorbeeld bij de thresholds tussen de 350 en 400 het veel specifieker is dan bijvoorbeeld tussen 500 en 600. Dit komt doordat we de code meerdere keren hebben gerunt en elke keer rond de 300, 350 en 400 kregen, dus we wouden het specificeren
+thresholds = [100, 200,250,275, 300,325,350,355,360,365,370,375,380,385,390,395, 400,425,450,475, 500, 600, 700, 800]  # drempelwaardes voor de diepte
+percentage_thresholds = [5,10,15, 20,25, 30, 40, 50, 60, 70, 80]  # Percentage thresholds
 
-# Lijst van diepte-drempelwaarden en percentage drempelwaarden
-thresholds = [
-    100, 200, 250, 275, 300, 325, 350, 355, 360, 365, 370, 375, 380, 385, 390, 395, 400, 
-    425, 450, 475, 500, 600, 700, 800
-]
-percentage_thresholds = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80]
-
-# Initialiseer een tabel voor samenvatting van de resultaten
+# Initialize summary table
 summary_table = []
 
 # Initialiseer een dictionary om correctheid per combinatie te tellen
@@ -36,7 +32,7 @@ correctness_counts = {
     for percentage_threshold in percentage_thresholds
 }
 
-# Analyseer elke afbeelding in de invoermap
+# Analyze object detection
 for image_file in os.listdir(input_folder):
     if not image_file.lower().endswith(('png', 'jpg', 'jpeg')):
         continue  # Sla niet-afbeeldingsbestanden over
@@ -70,14 +66,15 @@ for image_file in os.listdir(input_folder):
     detected_any_object = False  # Houd bij of er een object is gedetecteerd
     correct_thresholds = []  # Opslaan van correcte combinaties
 
+    #calculations for percentages of pixels above the threshold
     for threshold in thresholds:
         total_pixels = middle_piece.size  # Totaal aantal pixels in het middelste stuk
         pixels_above_threshold = np.sum(middle_piece > threshold)  # Pixels boven de drempelwaarde
         percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100  # Percentage van pixels boven de drempel
 
+        #check if object is detected
         for percentage_threshold in percentage_thresholds:
             key = f"{threshold} at {percentage_threshold}%"
-            # Controleer of het percentage boven de drempel voldoet
             if percentage_above_threshold > percentage_threshold:
                 detection_row[key] = "yes"
                 detected_any_object = True
@@ -95,32 +92,25 @@ for image_file in os.listdir(input_folder):
     # Voeg een kolom toe om aan te geven of er een object werd verwacht
     detection_row["Was There an Object in the Image?"] = "yes" if "object" in image_name.lower() else "no"
 
-    # Voeg correcte combinaties toe aan de rij
+    # Final column listing correct thresholds
     detection_row["Correct Thresholds"] = ", ".join(correct_thresholds)
 
     # Voeg deze rij toe aan de samenvattingstabel
     summary_table.append(detection_row)
 
-# Nadat alle afbeeldingen zijn verwerkt, bepaal de meest correcte combinaties
+# After processing all images, find the most correct combinations
 most_correct_count = max(correctness_counts.values())
 most_correct_combinations = [
     key for key, count in correctness_counts.items() if count == most_correct_count
 ]
 
-# Optioneel: sla de correctheidscijfers op als een aparte CSV
-correctness_counts_df = pd.DataFrame(
-    list(correctness_counts.items()), 
-    columns=["Threshold-Percentage Combination", "Correct Count"]
-)
+# Save correctness counts as an additional CSV for reference (optional)
+correctness_counts_df = pd.DataFrame(list(correctness_counts.items()), columns=["Threshold-Percentage Combination", "Correct Count"])
 correctness_counts_file = os.path.join(output_folder, "correctness_counts.csv")
 correctness_counts_df.to_csv(correctness_counts_file, index=False)
 
-# Voeg de meest correcte combinaties toe onderaan de samenvatting
-summary_table.append({
-    "Image Name": "Most Correct Combination(s)",
-    **{key: "" for key in correctness_counts},
-    "Correct Thresholds": ", ".join(most_correct_combinations)
-})
+# Add the most correct combinations below the summary table
+summary_table.append({"Image Name": "Most Correct Combination(s)", **{key: "" for key in correctness_counts}, "Correct Thresholds": ", ".join(most_correct_combinations)})
 
 # Sla de samenvattingstabel op als een CSV-bestand
 summary_df = pd.DataFrame(summary_table)

@@ -33,18 +33,15 @@ while not arrived:  # De test blijft draaien tot de tijd voorbij is (2 minuten)
     if frame is None:  # Controleer of het frame correct is geladen
         print("Error: Could not read the captured frame. Make sure it's saved correctly.")
     else:
-        # Toon de vorm van het frame en de pixelwaarde van de bovenste linkerhoek voor debugging
         print(f"Captured Frame Shape: {frame.shape}")
-        print(f"Frame Data (Top-left corner): {frame[0, 0]}") 
-
-        # Sla het originele frame op
+        print(f"Frame Data (Top-left corner): {frame[0, 0]}")  # Check the pixel value of top-left corner
+        # Save the original frame captured by libcamera
         cv2.imwrite('original_frame.jpg', frame)
+        # Transform input for MiDaS 
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+        imgbatch = transform(img).to('cpu')
 
-        # Transformeer het frame voor het MiDaS model (omzetten naar RGB)
-        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Converteer van BGR naar RGB
-        imgbatch = transform(img).to('cpu')  # Pas de transformatie toe en stuur naar CPU
-
-        # Maak een dieptevoorspelling met MiDaS
+        # Make a prediction
         with torch.no_grad():
             prediction = midas(imgbatch)  # Verkrijg de voorspelde dieptekaart
             prediction = torch.nn.functional.interpolate(
@@ -63,27 +60,27 @@ while not arrived:  # De test blijft draaien tot de tijd voorbij is (2 minuten)
             # Haal het middelste stuk eruit
             middle_piece = output[h_split:2*h_split, w_split:2*w_split]
 
-            # Genereer bestandsnamen voor de gekleurde dieptekaart en het middelste stuk
+            # Save the depth map and middle piece with unique filenames depending on the frame it is at
             colored_depth_map_filename = f'depth_map_colored_{frame_counter}.png'
             colored_middle_piece_filename = f'middle_piece_colored_{frame_counter}.png'
 
-            # Sla de gekleurde dieptekaart en het middelste stuk op als afbeeldingen
-            plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Geleide dieptekaart
-            plt.imsave(colored_middle_piece_filename, middle_piece, cmap='plasma')  # Geleide middenstuk
+            # Save the depth map and middle piece as colored images for visualization
+            plt.imsave(colored_depth_map_filename, output, cmap='plasma')  # Colored depth map
+            plt.imsave(colored_middle_piece_filename, middle_piece, cmap='plasma')  # Colored middle piece
 
-            # Controleer of er een object direct voor de camera is in het middelste stuk
-            total_pixels = middle_piece.size  # Totaal aantal pixels in het middelste stuk
-            pixels_above_threshold = np.sum(middle_piece > threshold)  # Aantal pixels boven de drempel
-            percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100  # Percentage van de pixels boven de drempel
+            # Check for object directly in front in the middle piece
+            total_pixels = middle_piece.size
+            pixels_above_threshold = np.sum(middle_piece > threshold)
+            percentage_above_threshold = (pixels_above_threshold / total_pixels) * 100
 
-            print(f"{percentage_above_threshold:.2f}% van de pixels in het middelste stuk hebben een diepte boven de drempel van {threshold}")
+            print(f"{percentage_above_threshold:.2f}% of pixels in the middle piece have a depth value above {threshold}")
 
-            # Controleer voor het volledige stuk (alle pixels van het frame)
-            total_pixels2 = output.size  # Totaal aantal pixels in de volledige dieptekaart
-            pixels_above_threshold2 = np.sum(output > threshold)  # Aantal pixels boven de drempel
-            percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100  # Percentage voor de volledige afbeelding
+            # Check for object directly in front in the whole piece
+            total_pixels2 = output.size
+            pixels_above_threshold2 = np.sum(output > threshold)
+            percentage_above_threshold2 = (pixels_above_threshold2 / total_pixels2) * 100
 
-            print(f"{percentage_above_threshold2:.2f}% van de pixels in de gehele dieptekaart hebben een diepte boven de drempel van {threshold}")
+            print(f"{percentage_above_threshold2:.2f}% of pixels in the whole piece have a depth value above {threshold}")
 
             # Als het percentage van pixels boven de drempel groter is dan het percentage drempel
             if percentage_above_threshold > percentagethreshold:
