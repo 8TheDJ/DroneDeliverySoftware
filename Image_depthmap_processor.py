@@ -9,7 +9,7 @@ midas = torch.hub.load('intel-isl/MiDaS', 'MiDaS_small')
 midas.to('cpu')
 midas.eval()
 
-# Input transformation pipelinegi
+# Input transformation pipeline
 transforms = torch.hub.load('intel-isl/MiDaS', 'transforms')
 transform = transforms.small_transform
 
